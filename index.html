@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RONEX | Advanced AI</title>
+    <!-- Tailwind & Lucide Icons Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #09090b; }
+        ::-webkit-scrollbar { display: none; }
+        :root { --accent-color: #3b82f6; } /* Default Accent Blue */
+    </style>
+</head>
+<body class="text-zinc-200 min-h-screen flex overflow-hidden font-sans">
+
+    <!-- Left Sidebar (Collapsible History) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-zinc-950 border-r border-zinc-900 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0">
+        <div class="p-4 border-b border-zinc-900 flex justify-between items-center">
+            <span class="text-xl font-black tracking-widest text-white">RONEX</span>
+            <button onclick="toggleSidebar(false)" class="p-1 rounded-lg lg:hidden hover:bg-zinc-900"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <button onclick="clearChat()" class="flex items-center gap-2 p-3 m-3 font-medium border border-zinc-800 rounded-xl hover:bg-zinc-900 transition text-xs"><i data-lucide="plus" class="w-4 h-4"></i> New Conversation</button>
+        <div class="flex-1 px-3 overflow-y-auto space-y-1">
+            <p class="px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Recent Chats</p>
+            <div id="historyList"></div>
+        </div>
+        <div class="p-4 border-t border-zinc-900">
+            <button onclick="openSettings(true)" class="flex items-center gap-3 w-full p-2.5 rounded-xl text-zinc-400 hover:bg-zinc-900 hover:text-white transition text-xs"><i data-lucide="settings" class="w-4 h-4"></i> Settings Dashboard</button>
+        </div>
+    </aside>
+
+    <!-- Main Content Frame -->
+    <main class="flex-1 flex flex-col min-w-0 bg-zinc-950 relative h-screen">
+        <!-- Top Header Bar -->
+        <header class="flex items-center justify-between p-4 border-b border-zinc-900 bg-zinc-950/50 backdrop-blur-sm">
+            <button onclick="toggleSidebar(true)" class="p-1 rounded-lg lg:hidden text-zinc-400 hover:bg-zinc-900"><i data-lucide="menu" class="w-5 h-5"></i></button>
+            <div class="font-semibold text-zinc-300">Renox Core Matrix</div>
+            <div class="w-6"></div>
+        </header>
+
+        <!-- Dynamic Main Chat Window View -->
+        <div id="chatContainer" class="flex-1 p-4 overflow-y-auto space-y-6">
+            <!-- Central Welcome Screen -->
+            <div id="welcomeScreen" class="max-w-xl mx-auto mt-24 text-center space-y-6">
+                <div class="inline-flex p-4 rounded-full bg-zinc-900/60 text-blue-500 animate-pulse"><i data-lucide="sparkles" class="w-8 h-8"></i></div>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight">How can I help you today?</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                    <div onclick="injectPrompt('Explain quantum physics simply')" class="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800 cursor-pointer transition">
+                        <div class="font-medium text-white mb-1">Explain a concept</div>
+                        <div class="text-xs text-zinc-500">Break down complex science strings.</div>
+                    </div>
+                    <div onclick="injectPrompt('generate an image of a neon cyber dragon')" class="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800 cursor-pointer transition">
+                        <div class="font-medium text-white mb-1">Generate an image</div>
+                        <div class="text-xs text-zinc-500">Synthesize visual prompts via AI.</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Dynamic Messages will inject here -->
+        </div>
+
+        <!-- Chat Input Area Component -->
+        <footer class="p-4 bg-gradient-to-t from-zinc-950 to-transparent">
+          <div class="max-w-3xl mx-auto relative flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl p-2 focus-within:border-zinc-700 transition shadow-2xl">
+            <button class="p-2 text-zinc-400 hover:text-white"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
+            <input type="text" id="userInput" placeholder="Message Ronex..." class="flex-1 bg-transparent border-0 outline-none px-2 placeholder-zinc-500 text-white text-sm" onkeydown="if(event.key === 'Enter') sendMessage()" />
+            <button class="p-2 text-zinc-400 hover:text-white"><i data-lucide="mic" class="w-5 h-5"></i></button>
+            
+            <!-- Glowing Live Mode Trigger Shortcut Button -->
+            <button onclick="toggleLiveMode(true)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)] transition mr-1 text-xs">
+              <i data-lucide="radio" class="w-3.5 h-3.5 animate-pulse"></i> Live Mode
+            </button>
+            
+            <button onclick="sendMessage()" class="p-2 rounded-xl text-black bg-white hover:bg-zinc-200 transition"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
+          </div>
+        </footer>
+    </main>
+
+    <!-- 📷 Gemini-Style Fullscreen Live Camera Overlay -->
+    <div id="liveOverlay" class="hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col justify-between p-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2 text-xs font-bold tracking-widest text-zinc-400"><span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE STREAM • COVE SYSTEM</div>
+            <button onclick="toggleLiveMode(false)" class="p-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        
+        <!-- Circular Video Container Overlay -->
+        <div class="relative w-64 h-64 mx-auto rounded-full border-4 border-zinc-800 overflow-hidden flex items-center justify-center bg-zinc-900">
+            <video id="liveWebcam" class="w-full h-full object-cover scale-x-[-1]" autoplay playsinline muted></video>
+            <!-- Waveform Animation Layer Overlayed over video center -->
+            <div class="absolute inset-0 flex items-center justify-center gap-1 bg-black/10 pointer-events-none">
+                <div class="w-1 h-8 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-1 h-12 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                <div class="w-1 h-6 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.5s"></div>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-4 max-w-xs mx-auto w-full mb-8">
+            <button class="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400"><i data-lucide="mic" class="w-5 h-5"></i></button>
+            <button class="px-8 py-3 rounded-2xl bg-white text-black font-bold text-sm tracking-wide">Speak</button>
+            <button onclick="toggleLiveMode(false)" class="p-3.5 rounded-2xl bg-red-600/10 border border-red-500/20 text-red-400"><i data-lucide="phone-off" class="w-5 h-5"></i></button>
+        </div>
+    </div>
+
+    <!-- ⚙️ Hidden System Control Dashboard Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+        <div class="w-full max-w-2xl h-[550px] bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center p-4 border-b border-zinc-800 bg-zinc-900/50">
+                <h2 class="text-sm font-semibold text-white">System Settings Console</h2>
+                <button onclick="openSettings(false)" class="p-1 rounded-lg hover:bg-zinc-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="flex flex-1 min-h-0">
+                <!-- Modal Sidebar Navigation Tabs -->
+                <div class="w-48 border-r border-zinc-800 p-2 flex flex-col gap-1 text-xs">
+                    <button onclick="switchTab('general')" id="tabBtn-general" class="flex items-center gap-2 p-2.5 rounded-xl font-semibold bg-zinc-800 text-white text-left"><i data-lucide="sliders" class="w-4 h-4"></i> General</button>
+                    <button onclick="switchTab('personalization')" id="tabBtn-personalization" class="flex items-center gap-2 p-2.5 rounded-xl font-semibold text-zinc-400 hover:bg-zinc-800/40 text-left"><i data-lucide="user" class="w-4 h-4"></i> Profile Matrix</button>
+                    <button onclick="switchTab('api')" id="tabBtn-api" class="flex items-center gap-2 p-2.5 rounded-xl font-semibold text-zinc-400 hover:bg-zinc-800/40 text-left"><i data-lucide="key" class="w-4 h-4"></i> API Credentials</button>
+                </div>
+
+                <!-- Tabs Internal Dynamic View Panels -->
+                <div class="flex-1 p-6 overflow-y-auto bg-zinc-950/20 text-xs">
+                    <!-- General Settings tab Content -->
+                    <div id="tabContent-general" class="space-y-6">
+                        <div>
+                          <label class="block text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2">Accent Signature Picker</label>
+                          <div class="flex gap-2">
+                            <button onclick="changeAccent('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500 border border-white/20"></button>
+                            <button onclick="changeAccent('#22c55e')" class="w-6 h-6 rounded-full bg-green-500 border border-white/20"></button>
+                            <button onclick="changeAccent('#eab308')" class="w-6 h-6 rounded-full bg-yellow-500 border border-white/20"></button>
+                            <button onclick="changeAccent('#ec4899')" class="w-6 h-6 rounded-full bg-pink-500 border border-white/20"></button>
+                            <button onclick="changeAccent('#f97316')" class="w-6 h-6 rounded-full bg-orange-500 border border-white/20"></button>
+                          </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2">Voice Core Sliders</label>
+                            <select id="voiceModel" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-white outline-none"><option value="cove">Cove - Composed and direct</option><option value="sol">Sol - Savvy and relaxed</option></select>
+                        </div>
+                    </div>
+
+                    <!-- Personalization Profile System Tab Content -->
+                    <div id="tabContent-personalization" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-zinc-400 mb-1">User Handles (Name)</label>
+                            <input type="text" id="profileName" placeholder="Ujjwal" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-white outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 mb-1">Memories & Directives Bio Context</label>
+                            <textarea id="profileBio" rows="3" placeholder="Software Architect building secure bots..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-white outline-none resize-none"></textarea>
+                        </div>
+                        <button onclick="saveProfile()" class="w-full py-2.5 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition">Save Profile Data</button>
+                    </div>
+
+                    <!-- Hidden API Token Configuration Layer Tab Content -->
+                    <div id="tabContent-api" class="hidden space-y-4">
+                        <div class="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 leading-relaxed text-[11px] flex gap-2"><i data-lucide="shield-check" class="w-5 h-5 text-zinc-400 shrink-0"></i> Keys are stored locked locally on your terminal device instance cache.</div>
+                        <div>
+                            <label class="block text-zinc-400 mb-1">Gemini API Token Node</label>
+                            <input type="password" id="keyGemini" placeholder="••••••••••••••••••••" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 font-mono" />
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 mb-1">Tavily Web Search Token Node</label>
+                            <input type="password" id="keyTavily" placeholder="••••••••••••••••••••" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 font-mono" />
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 mb-1">HuggingFace Token Layer</label>
+                            <input type="password" id="keyHF" placeholder="••••••••••••••••••••" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 font-mono" />
+                        </div>
+                        <button onclick="saveTokens()" class="w-full py-2.5 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition">Lock Credentials Cryptographic State</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+                      </html>
+                          
